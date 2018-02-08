@@ -69,7 +69,7 @@ let times =
   
 (*......................................................................
 Exercise 3: Recall the prods function from Lab 1:
-#endif
+
 let rec prods (lst : (int * int) list) : int list =
   match lst with
   | [] -> []
