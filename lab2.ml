@@ -295,7 +295,7 @@ let dotprod (a : int list) (b : int list) : int option =
   in
   match (maybe prods tuple_lst) with
     | None -> None
-    | Some prodslst -> Some sum prodslst
+    | Some prodslst -> Some (sum prodslst)
 ;;
 
 
