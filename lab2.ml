@@ -1,4 +1,4 @@
-(* 
+(*
                               CS51 Lab 2
                     Polymorphism and record types
                              Spring 2018
@@ -44,9 +44,11 @@ To think about before you start coding:
 Now implement the two functions curry and uncurry.
 ......................................................................*)
 
-let curry = fun _ -> failwith "curry not implemented" ;;
-     
-let uncurry = fun _ -> failwith "uncurry not implemented" ;;
+let curry (funk: ('a * 'b)-> 'c) : 'a -> 'b-> 'c =
+  fun x y -> funk (x, y);;
+
+let uncurry (funk: 'a -> 'b-> 'c) : ('a * 'b)-> 'c =
+  fun (x, y) -> funk x y ;;
 
 (*......................................................................
 Exercise 2: OCaml's built in binary operators, like ( + ) and ( * ) are
@@ -62,11 +64,11 @@ functions.
 ......................................................................*)
 
 let plus =
-  fun _ -> failwith "plus not implemented"
-     
+  uncurry ( + );;
+
 let times =
-  fun _ -> failwith "times not implemented" ;;
-  
+  uncurry ( * ) ;;
+
 (*......................................................................
 Exercise 3: Recall the prods function from Lab 1:
 
@@ -80,7 +82,7 @@ do you need the uncurried times function?
 ......................................................................*)
 
 let prods =
-  fun _ -> failwith "prods not implemented" ;; 
+  List.map times ;;
 
 (*======================================================================
 Part 2: Option types
@@ -107,15 +109,22 @@ element in an empty list. This is an ideal application for option
 types.
 
 ........................................................................
-Exercise 4: 
+Exercise 4:
 
 Reimplement max_list, but this time, it should return an int option
 instead of an int.
 ......................................................................*)
 
-let max_list (lst : int list) : int option =
-  failwith "max_list not implemented" ;;
-  
+let rec max_list (lst : int list) : int option =
+  match lst with
+  | [] -> None
+  | [one] -> Some one
+  | head :: tail ->
+      match max_list tail with
+      | None -> Some head
+      | Some x -> Some (max head x)
+;;
+
 (*......................................................................
 Exercise 5: Write a function to return the smaller of two int options,
 or None if both are None. If exactly one argument is None, return the
@@ -124,8 +133,12 @@ useful.
 ......................................................................*)
 
 let min_option (x : int option) (y : int option) : int option =
-  failwith "min_option not implemented" ;;
-     
+  match x, y with
+  | Some x, Some y -> Some (min x y)
+  | _, Some y -> Some y
+  | Some x, _ -> Some x
+  | _, _ -> None ;;
+
 (*......................................................................
 Exercise 6: Write a function to return the larger of two int options, or
 None if both are None. If exactly one argument is None, return the
@@ -133,14 +146,18 @@ other.
 ......................................................................*)
 
 let max_option (x : int option) (y : int option) : int option =
-  failwith "max_option not implemented" ;;
+    match x, y with
+  | Some x, Some y -> Some (max x y)
+  | _, Some y -> Some y
+  | Some x, _ -> Some x
+  | _, _ -> None ;; ;;
 
 (*======================================================================
 Part 3: Polymorphism practice
 
 ........................................................................
 Exercise 7: Do you see a pattern in your implementations of min_option
-and max_option? How can we factor out similar code?  
+and max_option? How can we factor out similar code?
 
 Write a higher-order function for binary operations on options taking
 three arguments in order: the binary operation (a curried function)
@@ -148,24 +165,29 @@ and its first and second argument. If both arguments are None, return
 None.  If one argument is (Some x) and the other argument is None,
 function should return (Some x). If neither argument is none, the
 binary operation should be applied to the argument values and the
-result appropriately returned. 
+result appropriately returned.
 
 What is calc_option's function signature? Implement calc_option.
 ......................................................................*)
 
-let calc_option =
-  fun _ -> failwith "calc_option not implemented" ;;
-     
+let calc_option funk x y : 'a option =
+    match x, y with
+  | Some x, Some y -> Some (funk x y)
+  | _, Some y -> Some y
+  | Some x, _ -> Some x
+  | _, _ -> None
+;;
+
 (*......................................................................
 Exercise 8: Now rewrite min_option and max_option using the higher-order
 function calc_option. Call them min_option_2 and max_option_2.
 ......................................................................*)
-  
-let min_option_2 =
-  fun _ -> failwith "min_option_2 not implemented" ;;
-     
-let max_option_2 =
-  fun _ -> failwith "max_option_2 not implemented" ;;
+
+let min_option_2 (x : int option) (y : int option): int option =
+  calc_option min x y ;;
+
+let max_option_2 (x : int option) (y : int option): int option =
+  calc_option max x y ;;
 
 (*......................................................................
 Exercise 9: Now that we have calc_option, we can use it in other
@@ -174,10 +196,10 @@ than int options. Define a function and_option to return the boolean
 AND of two bool options, or None if both are None. If exactly one is
 None, return the other.
 ......................................................................*)
-  
-let and_option =
-  fun _ -> failwith "and_option not implemented" ;;
-  
+
+let and_option (x : bool option) (y : bool option) : bool option =
+  calc_option (&&) x y;;
+
 (*......................................................................
 Exercise 10: In Lab 1, you implemented a function zip that takes two
 lists and "zips" them together into a list of pairs. Here's a possible
@@ -195,20 +217,31 @@ type of the result? Did you provide full typing information in the
 first line of the definition?
 ......................................................................*)
 
-let zip_exn =
-  fun _ -> failwith "zip_exn not implemented" ;;
+let rec zip_exn (x : 'a list) (y : 'b list) : ('a * 'b) list =
+  match x, y with
+  | [], [] -> []
+  | xhd :: xtl, yhd :: ytl -> (xhd, yhd) :: (zip_exn xtl ytl)
+  | _, _ -> failwith "Unmatched lists"
+;;
 
 (*......................................................................
 Exercise 11: Another problem with the implementation of zip_exn is that,
 once again, its match is not exhaustive and it raises an exception
 when given lists of unequal length. How can you use option types to
-generate an alternate solution without this property? 
+generate an alternate solution without this property?
 
 Do so below in a new definition of zip.
 ......................................................................*)
 
-let zip =
-  fun _ -> failwith "zip not implemented" ;;
+let rec zip (x : 'a list option) (y : 'b list option) : ('a * 'b) list option =
+  match x, y with
+  | Some [], Some [] -> Some []
+  | Some (xhd :: xtl), Some (yhd :: ytl) ->
+      (match (zip (Some xtl) (Some ytl)) with
+      | None -> None
+      | Some lst_1 -> Some ((xhd, yhd) :: lst_1))
+  | _, _ -> None
+;;
 
 (*====================================================================
 Part 4: Factoring out None-handling
@@ -231,7 +264,7 @@ branch. This is something we're likely to be doing a lot of. Let's
 factor that out to simplify the implementation.
 
 ........................................................................
-Exercise 12: Define a function called maybe that takes a function of 
+Exercise 12: Define a function called maybe that takes a function of
 type 'a -> 'b and an argument of type 'a option, and "maybe" (depending
 on whether its argument is a None or a Some) applies the function to
 the argument. The maybe function either passes on the None if its
@@ -239,9 +272,11 @@ first argument is None, or if its first argument is Some v, it applies
 its second argument to that v and returns the result, appropriately
 adjusted for the result type. Implement the maybe function.
 ......................................................................*)
-  
-let maybe (f : 'a -> 'b) (x : 'a option) : 'b option =
-  failwith "maybe not implemented" ;; 
+
+let maybe (f : 'a option -> 'b option) (x : 'a option) : 'b option =
+  match x with
+  | None -> None
+  | x_1 -> f x_1;;
 
 (*......................................................................
 Exercise 13: Now reimplement dotprod to use the maybe function. (The
@@ -255,10 +290,10 @@ let sum : int list -> int =
   List.fold_left (+) 0 ;;
 
 let dotprod (a : int list) (b : int list) : int option =
-  failwith "dot_prod not implemented" ;; 
+  failwith "zip_2 not implemented";;
 
 (*......................................................................
-Exercise 14: Reimplement zip along the same lines, in zip_2 below. 
+Exercise 14: Reimplement zip along the same lines, in zip_2 below.
 ......................................................................*)
 
 let rec zip_2 (x : int list) (y : int list) : ((int * int) list) option =
@@ -271,7 +306,7 @@ function always passes along the None.
 ......................................................................*)
 
 let rec max_list_2 (lst : int list) : int option =
-  failwith "max_list not implemented" ;; 
+  failwith "max_list not implemented" ;;
 
 (*======================================================================
 Part 5: Record types
@@ -289,7 +324,7 @@ type enrollment = { name : string;
 
 (* Here's an example of a list of enrollments. *)
 
-let college = 
+let college =
   [ { name = "Pat";   id = 1; course = "cs51" };
     { name = "Pat";   id = 1; course = "emr11" };
     { name = "Kim";   id = 2; course = "emr11" };
@@ -309,7 +344,7 @@ Exercise 16: Define a function called transcript that takes an
 enrollment list and returns a list of all the enrollments for a given
 student as specified with his or her id.
 
-For example: 
+For example:
 # transcript college 5 ;;
 - : enrollment list =
 [{name = "Sandy"; id = 5; course = "ls1b"};
@@ -320,7 +355,7 @@ let transcript (enrollments : enrollment list)
                (student : int)
              : enrollment list =
   failwith "transcript not implemented" ;;
-  
+
 (*......................................................................
 Exercise 17: Define a function called ids that takes an enrollment
 list and returns a list of all the id numbers in that enrollment list,
@@ -334,13 +369,13 @@ For example:
 
 let ids (enrollments: enrollment list) : int list =
   failwith "ids not implemented" ;;
-  
+
 (*......................................................................
 Exercise 18: Define a function called verify that determines whether all
 the entries in an enrollment list for each of the ids appearing in the
 list have the same name associated.
 
-For example: 
+For example:
 # verify college ;;
 - : bool = false
 ......................................................................*)
