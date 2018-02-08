@@ -233,11 +233,11 @@ generate an alternate solution without this property?
 Do so below in a new definition of zip.
 ......................................................................*)
 
-let rec zip (x : 'a list option) (y : 'b list option) : ('a * 'b) list option =
+let rec zip (x : 'a list) (y : 'b list) : ('a * 'b) list option =
   match x, y with
-  | Some [], Some [] -> Some []
-  | Some (xhd :: xtl), Some (yhd :: ytl) ->
-      (match (zip (Some xtl) (Some ytl)) with
+  | [], [] -> Some []
+  | xhd :: xtl, yhd :: ytl ->
+      (match (zip xtl ytl) with
       | None -> None
       | Some lst_1 -> Some ((xhd, yhd) :: lst_1))
   | _, _ -> None
@@ -273,10 +273,10 @@ its second argument to that v and returns the result, appropriately
 adjusted for the result type. Implement the maybe function.
 ......................................................................*)
 
-let maybe (f : 'a option -> 'b option) (x : 'a option) : 'b option =
+let maybe (f : 'a -> 'b) (x : 'a option) : 'b option =
   match x with
   | None -> None
-  | x_1 -> f x_1;;
+  | Some x_1 -> Some (f x_1);;
 
 (*......................................................................
 Exercise 13: Now reimplement dotprod to use the maybe function. (The
@@ -287,10 +287,17 @@ Lab 1.
 ......................................................................*)
 
 let sum : int list -> int =
-  List.fold_left (+) 0 ;;
+  List.fold_left (+) 0
+;;
 
 let dotprod (a : int list) (b : int list) : int option =
-  failwith "zip_2 not implemented";;
+  let tuple_lst = zip a b
+  in
+  match (maybe prods tuple_lst) with
+    | None -> None
+    | Some prodslst -> Some sum prodslst
+;;
+
 
 (*......................................................................
 Exercise 14: Reimplement zip along the same lines, in zip_2 below.
